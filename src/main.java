@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -88,9 +89,12 @@ abstract class Strategy//策略类，存放算法
         Random r = new Random();
         int i = r.nextInt(solution.select_set.size()-1);
         int j = r.nextInt(solution.unselect_set.size()-1);//在i,j中随机找两点;
-        Integer mid = solution.select_set.get(i);
+        Integer mid_one = solution.select_set.get(i);
+        Integer mid_two = solution.unselect_set.get(j);
         solution.select_set.remove(i);
-        solution.unselect_set.add(Integer.valueOf(mid));
+        solution.unselect_set.remove(j);
+        solution.unselect_set.add(Integer.valueOf(mid_one));
+        solution.select_set.add(Integer.valueOf(mid_two));
         solution.value = solution.getValue();
         return solution;
     }
@@ -119,8 +123,30 @@ public class main {
     static int CODE_NUMBER;
     public static void main(String[] args)
     {
-        CODE_NUMBER = 5;
+        CODE_NUMBER = 150;
         cost_mariax = new double[CODE_NUMBER+1][CODE_NUMBER+1];
+        for(int i=1;i<=CODE_NUMBER;i++)
+        try {
+            FileReader fr = new FileReader("MDPI1_150.txt");
+            BufferedReader br = new BufferedReader(fr);
+            String line = " ";
+            while(true)
+            {
+                line = br.readLine();
+                //System.out.println(line);
+                if(line == null)break;
+                String data[] = line.split("\t");
+                cost_mariax[Integer.valueOf(data[0])][Integer.valueOf(data[1])] = Double.valueOf(data[2]);
+                cost_mariax[Integer.valueOf(data[1])][Integer.valueOf(data[0])] = Double.valueOf(data[2]);
+
+            }
+        }
+        catch(IOException e)
+        {
+            e.printStackTrace();
+        }
+
+       // cost_mariax = new double[CODE_NUMBER+1][CODE_NUMBER+1];
         for(int i=1;i<=CODE_NUMBER;i++)
             for(int j=1;j<=CODE_NUMBER;j++)
             {
@@ -129,27 +155,50 @@ public class main {
                     cost_mariax[i][j] = 0;
                     continue;
                 }
-                if(cost_mariax[i][j]==0 && cost_mariax[j][i] ==0)//都为0
-                {
-                    Random r = new Random();
-                    double d = r.nextDouble()*8 + (-4);//获得4到-4中的随机数
-                    cost_mariax[i][j] = d;
-                    cost_mariax[j][i] = d;
-                }
+
+
             }
             Solution solution = Strategy.ini_solution();
+            System.out.println(solution.value);
            for(int i=1;i<=1000;i++)
            {
                Solution new_solution = new Solution();
                new_solution.select_set.addAll(solution.select_set);
                new_solution.unselect_set.addAll(solution.unselect_set);
                new_solution.value = solution.value;
-               new_solution = Strategy.exchange(solution);
-               if(solution.value<new_solution.value)
-                   solution = new_solution;
-               System.out.printlnn;
+               if(solution.unselect_set.size()==0)
+               {
+                   new_solution = Strategy.remove(solution);
+               }
+               else if(solution.select_set.size()==0)
+               {
+                   new_solution = Strategy.remove(solution);
+               }
+               else {
+                   Random r =  new Random();
+                   double t = r.nextDouble();
+                   if(t>0.6) {
+                       new_solution = Strategy.exchange(new_solution);
+                   }
+                   else if(t>0.3)
+                   {
+                       new_solution = Strategy.remove(new_solution);
 
+                   }
+                   else
+                   {
+                       new_solution = Strategy.insert(new_solution);
+                   }
+
+               }
+               if(solution.value<new_solution.value) {
+                   solution = new_solution;
+                   System.out.println(new_solution.value);
+               }
            }
+            System.out.println("当前解为"+solution.value);
+            System.out.println("被选择的点集的大小为" + solution.select_set.size());
+            System.out.println("最优解为"+ 45.92);
 
     }
 }
